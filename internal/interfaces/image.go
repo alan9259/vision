@@ -1,3 +1,3 @@
-package image
+package interfaces
 
 // image interface
