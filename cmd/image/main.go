@@ -13,8 +13,8 @@ func main() {
 	r := router.New()
 	v1 := r.Group("/api")
 
-	d := platform.New() //db connection
-	//platform.AutoMigrate(d) //Create DB's if they don't exist
+	d := platform.New()     //db connection
+	platform.AutoMigrate(d) //Create DB's if they don't exist
 
 	cs := store.NewAzureStore(d)
 	/*

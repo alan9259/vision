@@ -19,3 +19,10 @@ func New() *gorm.DB {
 	db.LogMode(true)
 	return db
 }
+
+func AutoMigrate(db *gorm.DB) {
+	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
+		return "miu." + defaultTableName
+	}
+
+}
