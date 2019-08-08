@@ -3,10 +3,8 @@ package handler
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/url"
-	"os"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/labstack/echo"
@@ -50,37 +48,59 @@ func (h *Handler) UploadImage(c echo.Context) error {
 	// pipeline to make requests.
 	containerURL := azblob.NewContainerURL(*URL, p)
 
-	data := []byte("hello world this is a blob\n")
-	fileName := "Once"
-	err = ioutil.WriteFile(fileName, data, 0700)
-	handleErrors(err)
+	// data := []byte("hello world this is a blob\n")
+	// fileName := "Once"
+	// err = ioutil.WriteFile(fileName, data, 0700)
+	// handleErrors(err)
 
-	// Here's how to upload a blob.
-	blobURL := containerURL.NewBlockBlobURL(fileName)
-	file, err := os.Open(fileName)
-	handleErrors(err)
+	fileName := c.FormValue("file_name")
+	//bodyPath := c.FormValue("body_path")
+	//thumbnailPath := c.FormValue("thumbnail_path")
 
-	fmt.Printf("Uploading the file with blob name: %s\n", fileName)
-	ctx := context.Background()
-	_, err = azblob.UploadFileToBlockBlob(ctx, file, blobURL, azblob.UploadToBlockBlobOptions{
-		BlockSize:   4 * 1024 * 1024,
-		Parallelism: 16})
-	handleErrors(err)
+	// file, err := c.FormFile("file")
+	// src, err := file.Open()
 
-	// List the container that we have created above
-	fmt.Println("Listing the blobs in the container:")
-	for marker := (azblob.Marker{}); marker.NotDone(); {
-		// Get a result segment starting with the blob indicated by the current Marker.
-		listBlob, err := containerURL.ListBlobsFlatSegment(ctx, marker, azblob.ListBlobsSegmentOptions{})
+	form, err := c.MultipartForm()
+	files := form.File["image"]
+
+	for _, file := range files {
+		src, err := file.Open()
+
+		// Here's how to upload a blob.
+
+		blobURL := containerURL.NewBlockBlobURL(fileName)
+		//src, err := os.Open(fileName)
+		// handleErrors(err)
+
+		fmt.Printf("Uploading the file with blob name: %s\n", fileName)
+		ctx := context.Background()
+		// _, err = azblob.UploadFileToBlockBlob(ctx, src, blobURL, azblob.UploadToBlockBlobOptions{
+		// 	BlockSize:   4 * 1024 * 1024,
+		// 	Parallelism: 16})
+
+		_, err = azblob.UploadStreamToBlockBlob(ctx, src, blobURL, azblob.UploadStreamToBlockBlobOptions{
+			BufferSize: 4 * 1258291,
+			MaxBuffers: 5,
+		})
+
 		handleErrors(err)
 
-		// ListBlobs returns the start of the next segment; you MUST use this to get
-		// the next segment (after processing the current result segment).
-		marker = listBlob.NextMarker
+		// List the container that we have created above
+		fmt.Println("Listing the blobs in the container:")
+		for marker := (azblob.Marker{}); marker.NotDone(); {
+			// Get a result segment starting with the blob indicated by the current Marker.
+			listBlob, err := containerURL.ListBlobsFlatSegment(ctx, marker, azblob.ListBlobsSegmentOptions{})
+			handleErrors(err)
 
-		// Process the blobs returned in this result segment (if the segment is empty, the loop body won't execute)
-		for _, blobInfo := range listBlob.Segment.BlobItems {
-			fmt.Print("	Blob name: " + blobInfo.Name + "\n")
+			// ListBlobs returns the start of the next segment; you MUST use this to get
+			// the next segment (after processing the current result segment).
+			marker = listBlob.NextMarker
+
+			// Process the blobs returned in this result segment (if the segment is empty, the loop body won't execute)
+			for _, blobInfo := range listBlob.Segment.BlobItems {
+				fmt.Print("	Blob name: " + blobInfo.Name + "\n")
+			}
+
 		}
 	}
 

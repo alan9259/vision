@@ -17,6 +17,7 @@ func main() {
 	platform.AutoMigrate(d) //Create DB's if they don't exist
 
 	cs := store.NewAzureStore(d)
+	is := store.NewImageStore(d)
 	/*
 		add in stores
 		image only one for this api
@@ -25,7 +26,7 @@ func main() {
 		create handler initialised with stores
 	*/
 
-	h := handler.NewHandler(cs)
+	h := handler.NewHandler(cs, is)
 
 	h.Register(v1)                            //register the group with the handler
 	r.Logger.Fatal(r.Start("127.0.0.1:8586")) // diff port to auth api

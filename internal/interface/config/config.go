@@ -1,9 +1,9 @@
-package interfaces
+package config
 
 import (
 	"vision/internal/model"
 )
 
-type ConfigStore interface {
+type Store interface {
 	GetApiKey(string) (*model.Config, error)
 }
